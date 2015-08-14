@@ -1,25 +1,120 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "repData_peer1"
 ---
 
 
-## Loading and preprocessing the data
+
+### Author: Matteo Forgiarini, Milan, Italy
+Reading the data and checking file structure and lenght
+```{r}
+library(lattice)
+setwd("~/Desktop/RepData_PeerAssessment1")
+d=read.csv(file = "activity.csv")
+head(d)
+summary(d)
+nrow(d)
+```
+
+Calculating the total number of steps taken per day
+```{r}
+attach(d)
+a=data.frame(aggregate(steps~date, FUN=sum))
+head(a)
+
+```
 
 
+Making a histogram of the total number of steps taken each day
+```{r}
+hist(a$steps, 10)
 
-## What is mean total number of steps taken per day?
+```
+Calculating and reporting the mean and median of the total number of steps taken per day
+```{r}
+mean(a$steps)
+median(a$steps)
+```
+
+Making a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+b=data.frame(aggregate(steps~interval, FUN=mean))
+head(b)
+detach(d)
+attach(b)
+plot(x = interval, y =steps, type = "l" )
+
+```
+
+Calculating the  5-minute interval, on average across all the days in the dataset, containing the maximum number of steps
+```{r}
+m=max(steps)
+b[steps==m,]$interval
+
+```
+
+Calculating and reporting the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+nrow(d) 
+ok=complete.cases(d)
+d1=d[!ok,]
+nrow(d1)
+head(d1, 10)
+
+```
+Devising a strategy for filling in all of the missing values in the dataset.
+
+####I'm going to fill the Nas with the mean of their own interval averaged across the dataset.
+
+Creating a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+b=data.frame(aggregate(d$steps~d$interval, FUN=mean))
+head(b)
+for(i in (1:nrow(d))) {
+   d[i,1]= ifelse(is.na(d[i,1]), b[i,2], d[i,1])
+}
+head(d)
+```
+Making a histogram of the total number of steps taken each day and Calculating and reporting the mean and median total number of steps taken per day.
+```{r}
+head(d)
+b=data.frame(aggregate(d$steps~d$date, FUN=sum))
+head(b)
+hist(b$d.steps,10)
+mean(b$d.steps)
+median(b$d.steps)
+```
+#### Mean and median total number of steps taken per day do not differ from estimates calculated before imputing Nas with data from specific interval.
+
+Creating a new factor variable in the dataset with two levels  (weekday and weekend) indicating whether a given date is a weekday or weekend day.
+```{r}
+head(d)
+d$daynumber=as.POSIXlt(d[[2]])$wday
+head(d)
+for(i in (1:nrow(d))) {
+d[i,"daytype"]= ifelse((d[i,4]>0 & d[i,4]<6), "weekday", "weekend")
+}
+head(d)
+
+```
+Making a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
 
+```{r}
+head(d)
+wd=data.frame(aggregate(d[d$daytype=="weekday",]$steps~d[d$daytype=="weekday",]$interval, FUN=mean))
+names(wd)=c("interval", "steps")
+wd$daytype="weekday"
+head(wd)
 
-## What is the average daily activity pattern?
+we=data.frame(aggregate(d[d$daytype=="weekend",]$steps~d[d$daytype=="weekend",]$interval, FUN=mean))
+names(we)=c("interval", "steps")
+we$daytype="weekend"
+dd=rbind(wd,we)
+xyplot  (steps ~ interval | daytype, data = dd,
+type = "l", lty = 1)
 
+```
 
+```{r}
 
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+```
